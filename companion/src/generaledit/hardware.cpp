@@ -34,6 +34,9 @@
 constexpr char FIM_SWITCHTYPE2POS[]  {"Switch Type 2 Pos"};
 constexpr char FIM_SWITCHTYPE3POS[]  {"Switch Type 3 Pos"};
 constexpr char FIM_INTERNALMODULES[] {"Internal Modules"};
+constexpr char FIM_AUX1SERIALMODES[] {"AUX1 Modes"};
+constexpr char FIM_AUX2SERIALMODES[] {"AUX2 Modes"};
+constexpr char FIM_VCPSERIALMODES[]  {"VCP Modes"};
 
 class ExclusiveComboGroup: public QObject
 {
@@ -95,8 +98,10 @@ HardwarePanel::HardwarePanel(QWidget * parent, GeneralSettings & generalSettings
 
   int antmodelid = editorItemModels->registerItemModel(GeneralSettings::antennaModeItemModel());
   int btmodelid = editorItemModels->registerItemModel(GeneralSettings::bluetoothModeItemModel());
-  int auxmodelid = editorItemModels->registerItemModel(GeneralSettings::serialModeItemModel(GeneralSettings::SP_AUX1));
-  int vcpmodelid = editorItemModels->registerItemModel(GeneralSettings::serialModeItemModel(GeneralSettings::SP_VCP));
+  id = editorItemModels->registerItemModel(GeneralSettings::serialModeItemModel());
+  tabFilteredModels->registerItemModel(new FilteredItemModel(editorItemModels->getItemModel(id), GeneralSettings::AUX1Context), FIM_AUX1SERIALMODES);
+  tabFilteredModels->registerItemModel(new FilteredItemModel(editorItemModels->getItemModel(id), GeneralSettings::AUX2Context), FIM_AUX2SERIALMODES);
+  tabFilteredModels->registerItemModel(new FilteredItemModel(editorItemModels->getItemModel(id), GeneralSettings::VCPContext), FIM_VCPSERIALMODES);
   int baudmodelid = editorItemModels->registerItemModel(GeneralSettings::internalModuleBaudrateItemModel());
   int uartmodelid = editorItemModels->registerItemModel(GeneralSettings::uartSampleModeItemModel());
 
@@ -233,7 +238,7 @@ HardwarePanel::HardwarePanel(QWidget * parent, GeneralSettings & generalSettings
     QString lbl = "AUX1";
     addLabel(tr("%1").arg(lbl), row, 0);
     AutoComboBox *serialPortMode = new AutoComboBox(this);
-    serialPortMode->setModel(editorItemModels->getItemModel(auxmodelid));
+    serialPortMode->setModel(tabFilteredModels->getItemModel(FIM_AUX1SERIALMODES));
     serialPortMode->setField(generalSettings.serialPort[GeneralSettings::SP_AUX1], this);
     exclGroup->addCombo(serialPortMode);
 
@@ -251,7 +256,7 @@ HardwarePanel::HardwarePanel(QWidget * parent, GeneralSettings & generalSettings
     QString lbl = "AUX2";
     addLabel(tr("%1").arg(lbl), row, 0);
     AutoComboBox *serialPortMode = new AutoComboBox(this);
-    serialPortMode->setModel(editorItemModels->getItemModel(auxmodelid));
+    serialPortMode->setModel(tabFilteredModels->getItemModel(FIM_AUX2SERIALMODES));
     serialPortMode->setField(generalSettings.serialPort[GeneralSettings::SP_AUX2], this);
     exclGroup->addCombo(serialPortMode);
 
@@ -268,7 +273,7 @@ HardwarePanel::HardwarePanel(QWidget * parent, GeneralSettings & generalSettings
   if (firmware->getCapability(HasVCPSerialMode)) {
     addLabel(tr("USB-VCP"), row, 0);
     serialPortUSBVCP = new AutoComboBox(this);
-    serialPortUSBVCP->setModel(editorItemModels->getItemModel(vcpmodelid));
+    serialPortUSBVCP->setModel(tabFilteredModels->getItemModel(FIM_VCPSERIALMODES));
     serialPortUSBVCP->setField(generalSettings.serialPort[GeneralSettings::SP_VCP], this);
     exclGroup->addCombo(serialPortUSBVCP);
     addParams(row, serialPortUSBVCP);

@@ -50,17 +50,6 @@ enum AfhdsSpecialChars {
                    // ESC_ESC  must be used
 };
 
-enum DeviceAddress
-{
-  TRANSMITTER = 0x01,
-  // MODULE = 0x03,
-  IRM301 = 0x05,
-  FRM303 = 0x04,  
-};
-
-//Address used in transmitted frames - it constrains of target address and source address
-//const uint8_t FrameAddress = DeviceAddress::TRANSMITTER | (DeviceAddress::MODULE << 4);
-
 static void _serial_reset(void* buffer)
 {
   auto data = (SerialData*)buffer;

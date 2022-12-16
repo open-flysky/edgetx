@@ -888,6 +888,7 @@ static void* initExternal(uint8_t module)
   telemetryPortSetDirectionInput();
 #endif
   
+  //Address used in transmitted frames - it constrains of target address and source address, ext module is FRM303
   uint8_t address = DeviceAddress::TRANSMITTER | (DeviceAddress::FRM303 << 4);
   auto p_state = &protoState[module];
   p_state->init(module, &extmodulePulsesData.afhds3, drv, address);
@@ -948,6 +949,7 @@ etx_module_driver_t externalDriver = {
 
 static void* initInternal(uint8_t module)
 {
+  //Address used in transmitted frames - it constrains of target address and source address, int module is IRM301
   uint8_t address = DeviceAddress::TRANSMITTER | (DeviceAddress::IRM301 << 4);
   auto p_state = &protoState[module];
   p_state->init(module, &intmodulePulsesData, &IntmoduleSerialDriver, address);

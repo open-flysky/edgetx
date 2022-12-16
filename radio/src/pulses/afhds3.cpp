@@ -873,10 +873,12 @@ static void* initExternal(uint8_t module)
 #if defined(AFHDS3_EXT_UART)
   auto drv = extmoduleGetSerialPort();
   if (!drv) return nullptr;
+
 #if defined(PCBNV14)
   EXTMODULE_TX_NORMAL();
   EXTMODULE_RX_NORMAL();
 #endif  
+
   uint16_t period = AFHDS3_UART_COMMAND_TIMEOUT * 1000 /* us */;
 #else
   const etx_serial_driver_t* drv = nullptr;

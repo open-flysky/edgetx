@@ -31,8 +31,19 @@ unsigned char HallCmd[264] __DMA;
 
 STRUCT_HALL HallProtocol = { 0 };
 STRUCT_HALL HallProtocolTx = { 0 };
+signed short hall_raw_values1[FLYSKY_HALL_CHANNEL_COUNT];
+signed short hall_raw_values2[FLYSKY_HALL_CHANNEL_COUNT];
 signed short hall_raw_values[FLYSKY_HALL_CHANNEL_COUNT];
+uint32_t rawTime1 = 0;
+uint32_t rawTime2 = 0;
+bool lastGetTimeValid = false;
+uint16_t lastGetTime = 0;
+uint16_t interpolateThreshold = 0;
 unsigned short hall_adc_values[FLYSKY_HALL_CHANNEL_COUNT];
+
+
+
+
 
 /* crc16 implementation according to CCITT standards */
 const unsigned short CRC16Table[256]= {
@@ -87,6 +98,78 @@ unsigned short calc_crc16(void *pBuffer,unsigned char BufferSize)
 
 uint16_t get_flysky_hall_adc_value(uint8_t ch)
 {
+  if (ch == 0)
+  {
+    // Resampling calculation
+    uint32_t time = getTmr2MHz();
+    uint16_t interpolateThreshold;    
+
+    if (!lastGetTimeValid)
+    {
+      // No lastGetTime information
+      lastGetTime = time;
+      lastGetTimeValid = true;
+
+      // No resampling
+      for ( uint8_t channel = 0; channel < 4; channel++ )
+      {
+        hall_raw_values[channel] = hall_raw_values1[channel];
+      }
+    }
+    else
+    {
+      if (time < lastGetTime)
+      {
+        interpolateThreshold = ((65536 - lastGetTime) + time) >> 1;
+      }
+      else
+      {
+        interpolateThreshold = (time - lastGetTime) >> 1;
+      }
+      lastGetTime = time;
+
+      while (time < rawTime1)
+      {
+        time += 65536;
+      }
+      if (time - rawTime1 < interpolateThreshold)
+      {
+        // Interpolate resampling
+        int32_t timeDiff1 = time - rawTime2;
+        int32_t timeDiff2 = rawTime1 - rawTime2;
+        for ( uint8_t channel = 0; channel < 4; channel++ )
+        {
+          int32_t value = hall_raw_values1[channel];
+          value -= hall_raw_values2[channel];
+          value *= timeDiff1;
+          value /= timeDiff2;
+          value += hall_raw_values2[channel];
+          hall_raw_values[channel] = value;
+        }
+      }
+      else
+      {
+        // Extrapolate
+        int32_t timeDiff1 = time - rawTime1;
+        int32_t timeDiff2 = rawTime1 - rawTime2;
+        for ( uint8_t channel = 0; channel < 4; channel++ )
+        {
+          int32_t value = hall_raw_values1[channel];
+          value -= hall_raw_values2[channel];
+          value *= timeDiff1;
+          value /= timeDiff2;
+          value += hall_raw_values1[channel];
+          hall_raw_values[channel] = value;
+        }
+      }
+    }
+
+    for ( uint8_t channel = 0; channel < 4; channel++ )
+    {
+      hall_adc_values[channel] = FLYSKY_OFFSET_VALUE + hall_raw_values[channel];
+    }
+  }
+
   if (ch >= FLYSKY_HALL_CHANNEL_COUNT)
   {
     return 0;
@@ -364,11 +447,24 @@ void flysky_hall_stick_loop(void)
             {
             case TRANSFER_DIR_TXMCU:
                 if(HallProtocol.hallID.hall_Id.packetID == FLYSKY_HALL_RESP_TYPE_VALUES) {
-                  memcpy(hall_raw_values, HallProtocol.data, sizeof(hall_raw_values));
-                  for ( uint8_t channel = 0; channel < 4; channel++ )
+                  memcpy(hall_raw_values2, hall_raw_values1, sizeof(hall_raw_values2));
+                  memcpy(hall_raw_values1, HallProtocol.data, sizeof(hall_raw_values1));
+                  rawTime2 = rawTime1;
+                  rawTime1 = getTmr2MHz();
+                  if (rawTime1 < rawTime2)
+                  {
+                    rawTime1 += 65536;
+                  }
+                  if (rawTime2 >= 65536)
+                  {
+                    rawTime1 -= 65536;
+                    rawTime2 -= 65536;
+                  }
+
+/*                  for ( uint8_t channel = 0; channel < 4; channel++ )
                   {
                     hall_adc_values[channel] = FLYSKY_OFFSET_VALUE + hall_raw_values[channel];
-                  }
+                  }*/
                 }
                 break;
             }

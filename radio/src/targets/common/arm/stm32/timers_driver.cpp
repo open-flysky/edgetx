@@ -32,10 +32,10 @@ void init2MhzTimer()
   TIMER_2MHz_TIMER->CR1 = TIM_CR1_CEN;
 }
 
-// Start TIMER at 1000Hz
+// Start TIMER at 10kHz
 void init1msTimer()
 {
-  INTERRUPT_xMS_TIMER->ARR = 999; // 1mS in uS
+  INTERRUPT_xMS_TIMER->ARR = 99; // 0.1mS in uS
   INTERRUPT_xMS_TIMER->PSC = (PERI1_FREQUENCY * TIMER_MULT_APB1) / 1000000 - 1;  // 1uS
   INTERRUPT_xMS_TIMER->CCER = 0;
   INTERRUPT_xMS_TIMER->CCMR1 = 0;
@@ -65,7 +65,7 @@ void interrupt1ms()
 
   ++pre_scale;
 
-  // 1 ms loop
+  // 0.1 ms loop
 #if not defined(SIMU) && (defined(RADIO_FAMILY_T16) || defined(PCBNV14))
   if (globalData.flyskygimbals)
   {
@@ -74,7 +74,7 @@ void interrupt1ms()
 #endif
 
   // 5ms loop
-  if (pre_scale == 5 || pre_scale == 10) {
+  if (pre_scale == 50 || pre_scale == 100) {
 #if defined(HAPTIC)
     DEBUG_TIMER_START(debugTimerHaptic);
     HAPTIC_HEARTBEAT();
@@ -83,7 +83,7 @@ void interrupt1ms()
   }
   
   // 10ms loop
-  if (pre_scale == 10) {
+  if (pre_scale == 100) {
     pre_scale = 0;
 
     if (watchdogTimeout) {

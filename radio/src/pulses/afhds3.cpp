@@ -755,6 +755,7 @@ void ProtoState::parseData(uint8_t* rxBuffer, uint8_t rxBufferCount)
             } break;
           case RX_CMD_IBUS_DIRECTION:
             if(RX_CMDRESULT::RXSUCCESS==*data++) {
+              clearDirtyFlag(DC_RX_CMD_IBUS_DIRECTION);
               this->cmd_flg &= ~0x10;
               if( 0==cfg->version && 2==cfg->v0.ExternalBusType)
                 this->cmd_flg |= 0x20;
@@ -922,12 +923,8 @@ bool ProtoState::syncSettings()
       trsp.putFrame(COMMAND::SEND_COMMAND, FRAME_TYPE::REQUEST_SET_EXPECT_DATA, data, sizeof(data));
       if( 1==receiver_type(rx_version.ProductNumber))
       {
-          cfg->others.ExternalBusType = 0;
+          cfg->others.ExternalBusType = 0;//These RXs only support iBUS-OUT
       }
-      // else if( 2==receiver_type(rx_version.ProductNumber) )
-      // {
-
-      // }
       cfg->others.iBusType = cfg->others.ExternalBusType;
       cfg->others.dirtyFlag |= (uint32_t)1<<DC_RX_CMD_IBUS_DIRECTION;
     }

@@ -513,7 +513,6 @@ void ProtoState::setupFrame()
           trsp.putFrame(COMMAND::CHANNELS_FAILSAFE_DATA,
                    FRAME_TYPE::REQUEST_SET_NO_RESP, (uint8_t*)failSafe,
                    AFHDS3_MAX_CHANNELS * 2 + 2);
-          return;
       }
       else if( isConnected() ){
           uint8_t data[AFHDS3_MAX_CHANNELS*2 + 3] = { (uint8_t)(RX_CMD_FAILSAFE_VALUE&0xFF), (uint8_t)((RX_CMD_FAILSAFE_VALUE>>8)&0xFF), (uint8_t)(2*len)};
@@ -524,8 +523,8 @@ void ProtoState::setupFrame()
       }
     } else {
       trsp.putFrame(cmd, FRAME_TYPE::REQUEST_GET_DATA);
-      return;
     }
+    return;
   }
 
   if (isConnected()) {
@@ -878,8 +877,9 @@ bool ProtoState::syncSettings()
   if (checkDirtyFlag(DC_RX_CMD_FREQUENCY_V0))
   {
     TRACE("AFHDS3 [RX_CMD_FREQUENCY_V0]");
+    uint16_t Frequency = ((cfg->v0.PWMFrequency.Synchronized<<15)| cfg->v0.PWMFrequency.Frequency);
     uint8_t data[] = { (uint8_t)(RX_CMD_FREQUENCY_V0&0xFF), (uint8_t)((RX_CMD_FREQUENCY_V0>>8)&0xFF), 2,
-                        (uint8_t)(cfg->v0.PWMFrequency.Frequency&0xFF), (uint8_t)((cfg->v0.PWMFrequency.Frequency>>8)&0xFF) };
+                        (uint8_t)(Frequency&0xFF), (uint8_t)((Frequency>>8)&0xFF) };
     trsp.putFrame(COMMAND::SEND_COMMAND, FRAME_TYPE::REQUEST_SET_EXPECT_DATA, data, sizeof(data));
     return true;
   }

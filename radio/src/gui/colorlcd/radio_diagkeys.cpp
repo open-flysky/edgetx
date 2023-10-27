@@ -25,9 +25,13 @@
 
 #include "hal/rotary_encoder.h"
 
+#if defined(PCBPL18)
+static const uint8_t _trimMap[MAX_TRIMS * 2] = {8, 9, 10, 11, 12, 13, 14, 15, 2, 3, 4, 5, 0, 1, 6, 7};
+#else
 static const uint8_t _trimMap[MAX_TRIMS * 2] = {6, 7, 4, 5, 2, 3, 0, 1, 8, 9, 10, 11};
+#endif
 
-#if !defined(PCBNV14)
+#if !(defined(PCBNV14) || defined(PCBPL18))
 static EnumKeys get_ith_key(uint8_t i)
 {
   auto supported_keys = keysGetSupported();
